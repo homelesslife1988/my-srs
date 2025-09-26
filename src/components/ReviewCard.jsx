@@ -21,22 +21,25 @@ export default function ReviewCard({ card, user, onReviewed }) {
       due: dueDate.toISOString(),
     });
 
-    onReviewed(); // move to next card
+    setShowAnswer(false);
+    onReviewed();
   };
 
   return (
-    <div className="border rounded p-6 mb-4 shadow-sm bg-gray-50">
-      <p className="text-lg font-semibold mb-2">Question:</p>
-      <p className="mb-4 text-gray-800">{card.question}</p>
+    <div className="border rounded-lg p-6 shadow-sm bg-gray-50 flex flex-col gap-4">
+      <div>
+        <p className="text-lg font-semibold mb-1">Question:</p>
+        <p className="text-gray-800">{card.question}</p>
+      </div>
 
       {showAnswer && (
-        <>
-          <p className="text-lg font-semibold mb-2">Answer:</p>
-          <p className="mb-4 text-gray-700">{card.answer}</p>
-        </>
+        <div>
+          <p className="text-lg font-semibold mb-1">Answer:</p>
+          <p className="text-gray-700">{card.answer}</p>
+        </div>
       )}
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3 justify-center mt-2">
         {!showAnswer && (
           <button
             onClick={() => setShowAnswer(true)}

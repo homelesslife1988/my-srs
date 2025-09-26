@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 
 export default function CardEditor({ user, deck }) {
@@ -8,6 +8,12 @@ export default function CardEditor({ user, deck }) {
   const [showDueOnly, setShowDueOnly] = useState(true);
 
   useEffect(() => {
+    if (!deck) {
+      // Clear state if deck is null (deleted)
+      setCards([]);
+      setCardForm({ question: "", answer: "" });
+      return;
+    }
     fetchCards();
   }, [deck]);
 
@@ -22,6 +28,7 @@ export default function CardEditor({ user, deck }) {
 
   const addCard = async () => {
     if (!cardForm.question || !cardForm.answer) return;
+    if (!deck) return; // safety check
     await addDoc(collection(db, `users/${user.uid}/cards`), {
       deckId: deck.id,
       question: cardForm.question,
@@ -49,6 +56,14 @@ export default function CardEditor({ user, deck }) {
   };
 
   const dueCards = cards.filter(card => showDueOnly ? new Date(card.due) <= new Date() : true);
+
+  if (!deck) {
+    return (
+      <div className="flex-1 bg-white rounded shadow p-6 border border-gray-200 text-center text-gray-500">
+        Select a deck to edit cards.
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 bg-white rounded shadow p-6 border border-gray-200">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, addDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, deleteDoc, doc, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { Link } from "react-router-dom";
 
@@ -19,6 +19,26 @@ export default function DeckList({ user, decks, setDecks, selectedDeck, setSelec
     if (!deckName) return;
     await addDoc(collection(db, `users/${user.uid}/decks`), { name: deckName });
     setDeckName("");
+    fetchDecks();
+  };
+
+  /** --- Delete deck + its cards --- **/
+  const deleteDeck = async (deckId) => {
+    // Confirm deletion
+    if (!window.confirm("Are you sure you want to delete this deck? All cards will be deleted.")) return;
+
+    // Delete all cards in this deck
+    const cardsQuery = query(collection(db, `users/${user.uid}/cards`), where("deckId", "==", deckId));
+    const cardSnapshot = await getDocs(cardsQuery);
+    for (const cardDoc of cardSnapshot.docs) {
+      await deleteDoc(doc(db, `users/${user.uid}/cards`, cardDoc.id));
+    }
+
+    // Delete the deck itself
+    await deleteDoc(doc(db, `users/${user.uid}/decks`, deckId));
+
+    // Refresh list
+    if (selectedDeck?.id === deckId) setSelectedDeck(null);
     fetchDecks();
   };
 
@@ -47,12 +67,20 @@ export default function DeckList({ user, decks, setDecks, selectedDeck, setSelec
           <li key={deck.id} className={`p-2 mb-2 rounded cursor-pointer hover:bg-indigo-50 hover:text-indigo-700 ${selectedDeck?.id === deck.id ? 'bg-indigo-100' : ''}`}>
             <div className="flex justify-between items-center">
               <span onClick={() => setSelectedDeck(deck)}>{deck.name}</span>
-              <Link
-                to={`/review/${deck.id}`}
-                className="bg-indigo-500 hover:bg-indigo-600 text-white py-1 px-3 rounded shadow text-sm"
-              >
-                Review
-              </Link>
+              <div className="flex gap-2">
+                <Link
+                  to={`/review/${deck.id}`}
+                  className="bg-indigo-500 hover:bg-indigo-600 text-white py-1 px-3 rounded shadow text-sm"
+                >
+                  Review
+                </Link>
+                <button
+                  onClick={() => deleteDeck(deck.id)}
+                  className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded shadow text-sm"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </li>
         ))}
