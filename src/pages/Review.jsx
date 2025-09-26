@@ -11,9 +11,8 @@ export default function Review() {
   const [cards, setCards] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  /** --- Auth listener --- **/
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+    const unsubscribe = auth.onAuthStateChanged(currentUser => {
       setUser(currentUser);
       if (currentUser && deckId) fetchCards(currentUser.uid);
     });
@@ -27,7 +26,7 @@ export default function Review() {
   };
 
   const handleNextCard = () => {
-    setCurrentIndex((prev) => prev + 1);
+    setCurrentIndex(prev => prev + 1);
   };
 
   if (!user) {

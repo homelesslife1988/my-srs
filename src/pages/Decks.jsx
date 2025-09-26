@@ -9,7 +9,7 @@ export default function Decks() {
   const [selectedDeck, setSelectedDeck] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+    const unsubscribe = auth.onAuthStateChanged(currentUser => {
       setUser(currentUser);
     });
     return unsubscribe;
@@ -54,7 +54,6 @@ export default function Decks() {
       </div>
 
       <div className="flex gap-6">
-        {/* Deck List */}
         <DeckList
           user={user}
           decks={decks}
@@ -62,14 +61,7 @@ export default function Decks() {
           selectedDeck={selectedDeck}
           setSelectedDeck={setSelectedDeck}
         />
-
-        {/* Card Editor */}
-        {selectedDeck && (
-          <CardEditor
-            user={user}
-            deck={selectedDeck}
-          />
-        )}
+        {selectedDeck && <CardEditor user={user} deck={selectedDeck} />}
       </div>
     </div>
   );
