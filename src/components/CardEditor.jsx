@@ -9,7 +9,6 @@ export default function CardEditor({ user, deck }) {
 
   useEffect(() => {
     if (!deck) {
-      // Clear state if deck is null (deleted)
       setCards([]);
       setCardForm({ question: "", answer: "" });
       return;
@@ -27,8 +26,7 @@ export default function CardEditor({ user, deck }) {
   const handleCardChange = (e) => setCardForm({ ...cardForm, [e.target.name]: e.target.value });
 
   const addCard = async () => {
-    if (!cardForm.question || !cardForm.answer) return;
-    if (!deck) return; // safety check
+    if (!cardForm.question || !cardForm.answer || !deck) return;
     await addDoc(collection(db, `users/${user.uid}/cards`), {
       deckId: deck.id,
       question: cardForm.question,
@@ -59,17 +57,17 @@ export default function CardEditor({ user, deck }) {
 
   if (!deck) {
     return (
-      <div className="flex-1 bg-white rounded shadow p-6 border border-gray-200 text-center text-gray-500">
+      <div className="flex-1 bg-white rounded-lg shadow p-6 border border-gray-200 text-center text-gray-500">
         Select a deck to edit cards.
       </div>
     );
   }
 
   return (
-    <div className="flex-1 bg-white rounded shadow p-6 border border-gray-200">
+    <div className="flex-1 bg-white rounded-lg shadow p-6 border border-gray-200 flex flex-col gap-4">
       <h2 className="text-xl font-bold mb-4 text-indigo-700">{deck.name} - Cards</h2>
 
-      {/* Card Form */}
+      {/* Add Card Form */}
       <div className="flex flex-col md:flex-row gap-3 mb-4">
         <input
           type="text"
@@ -77,7 +75,7 @@ export default function CardEditor({ user, deck }) {
           placeholder="Question"
           value={cardForm.question}
           onChange={handleCardChange}
-          className="flex-1 border border-gray-300 p-2 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="flex-1 border border-gray-300 p-2 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 w-full md:w-auto"
         />
         <input
           type="text"
@@ -85,14 +83,17 @@ export default function CardEditor({ user, deck }) {
           placeholder="Answer"
           value={cardForm.answer}
           onChange={handleCardChange}
-          className="flex-1 border border-gray-300 p-2 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="flex-1 border border-gray-300 p-2 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 w-full md:w-auto"
         />
-        <button onClick={addCard} className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded shadow">
+        <button
+          onClick={addCard}
+          className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded shadow w-full md:w-auto"
+        >
           Add Card
         </button>
       </div>
 
-      {/* Due Only Toggle */}
+      {/* Show Due Only Toggle */}
       <div className="mb-4">
         <label className="inline-flex items-center gap-2">
           <input
@@ -106,17 +107,30 @@ export default function CardEditor({ user, deck }) {
       </div>
 
       {/* Card List */}
-      <ul>
+      <ul className="flex flex-col gap-3">
         {dueCards.map(card => (
-          <li key={card.id} className="flex flex-col md:flex-row justify-between items-start md:items-center border-b py-3">
-            <div>
-              <p className="font-semibold">{card.question}</p>
-              <p className="text-gray-600 text-sm">{card.answer}</p>
-              <p className="text-gray-400 text-xs">Due: {new Date(card.due).toLocaleDateString()}</p>
+          <li
+            key={card.id}
+            className="flex flex-col md:flex-row justify-between items-start md:items-center border p-3 rounded hover:bg-indigo-50"
+          >
+            <div className="flex-1">
+              <p className="font-semibold text-gray-800">{card.question}</p>
+              <p className="text-gray-600">{card.answer}</p>
+              <p className="text-gray-400 text-sm">Due: {new Date(card.due).toLocaleDateString()}</p>
             </div>
-            <div className="flex gap-2 mt-2 md:mt-0">
-              <button onClick={() => editCard(card)} className="bg-yellow-400 hover:bg-yellow-500 text-white py-1 px-2 rounded">Edit</button>
-              <button onClick={() => deleteCard(card.id)} className="bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded">Delete</button>
+            <div className="flex gap-2 mt-2 md:mt-0 ml-0 md:ml-4">
+              <button
+                onClick={() => editCard(card)}
+                className="bg-yellow-400 hover:bg-yellow-500 text-white py-1 px-3 rounded shadow text-sm whitespace-nowrap"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => deleteCard(card.id)}
+                className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded shadow text-sm whitespace-nowrap"
+              >
+                Delete
+              </button>
             </div>
           </li>
         ))}
