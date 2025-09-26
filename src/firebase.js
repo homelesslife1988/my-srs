@@ -3,14 +3,15 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, Timestamp, enableIndexedDbPersistence } from "firebase/firestore";
 
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "AIzaSyBin8q9AYENaq5Up3v90jKQbrtV2zIwQwU",
-    authDomain: "space-repetition-7a29e.firebaseapp.com",
-    projectId: "space-repetition-7a29e",
-    storageBucket: "space-repetition-7a29e.firebasestorage.app",
-    messagingSenderId: "40672936283",
-    appId: "1:40672936283:web:c19512816f040c41771a7e",
-    measurementId: "G-37HBQBJ1LZ"
+  apiKey: "AIzaSyBin8q9AYENaq5Up3v90jKQbrtV2zIwQwU",
+  authDomain: "space-repetition-7a29e.firebaseapp.com",
+  projectId: "space-repetition-7a29e",
+  storageBucket: "space-repetition-7a29e.firebasestorage.app",
+  messagingSenderId: "40672936283",
+  appId: "1:40672936283:web:c19512816f040c41771a7e",
+  measurementId: "G-37HBQBJ1LZ"
 };
 
 const app = initializeApp(firebaseConfig);
