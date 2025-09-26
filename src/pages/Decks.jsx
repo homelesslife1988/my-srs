@@ -9,9 +9,10 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, auth, loginWithGoogle, logout } from "../firebase";
 
 export default function Decks() {
+  const [user, setUser] = useState(null);
   const [decks, setDecks] = useState([]);
   const [selectedDeck, setSelectedDeck] = useState(null);
   const [deckName, setDeckName] = useState("");
@@ -19,17 +20,41 @@ export default function Decks() {
   const [cardForm, setCardForm] = useState({ question: "", answer: "" });
   const [showDueOnly, setShowDueOnly] = useState(true);
 
+  /** --- Auth --- **/
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      if (currentUser) fetchDecks(currentUser.uid);
+    });
+    return unsubscribe;
+  }, []);
+
+  const handleLogin = async () => {
+    const loggedInUser = await loginWithGoogle();
+    setUser(loggedInUser);
+    fetchDecks(loggedInUser.uid);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setUser(null);
+    setDecks([]);
+    setCards([]);
+    setSelectedDeck(null);
+  };
+
   /** --- Deck Management --- **/
-  const fetchDecks = async () => {
-    const snapshot = await getDocs(collection(db, "decks"));
+  const fetchDecks = async (uid) => {
+    const q = query(collection(db, `users/${uid}/decks`));
+    const snapshot = await getDocs(q);
     setDecks(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
   };
 
   const createDeck = async () => {
-    if (!deckName) return;
-    await addDoc(collection(db, "decks"), { name: deckName });
+    if (!deckName || !user) return;
+    await addDoc(collection(db, `users/${user.uid}/decks`), { name: deckName });
     setDeckName("");
-    fetchDecks();
+    fetchDecks(user.uid);
   };
 
   const selectDeck = (deck) => {
@@ -39,18 +64,17 @@ export default function Decks() {
 
   /** --- Card Management --- **/
   const fetchCards = async (deckId) => {
-    const q = query(collection(db, "cards"), where("deckId", "==", deckId));
+    if (!user) return;
+    const q = query(collection(db, `users/${user.uid}/cards`), where("deckId", "==", deckId));
     const snapshot = await getDocs(q);
     setCards(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
   };
 
-  const handleCardChange = (e) => {
-    setCardForm({ ...cardForm, [e.target.name]: e.target.value });
-  };
+  const handleCardChange = (e) => setCardForm({ ...cardForm, [e.target.name]: e.target.value });
 
   const addCard = async () => {
-    if (!cardForm.question || !cardForm.answer || !selectedDeck) return;
-    await addDoc(collection(db, "cards"), {
+    if (!cardForm.question || !cardForm.answer || !selectedDeck || !user) return;
+    await addDoc(collection(db, `users/${user.uid}/cards`), {
       deckId: selectedDeck.id,
       question: cardForm.question,
       answer: cardForm.answer,
@@ -63,15 +87,17 @@ export default function Decks() {
   };
 
   const deleteCard = async (cardId) => {
-    await deleteDoc(doc(db, "cards", cardId));
+    if (!user) return;
+    await deleteDoc(doc(db, `users/${user.uid}/cards`, cardId));
     fetchCards(selectedDeck.id);
   };
 
   const editCard = async (card) => {
+    if (!user) return;
     const newQuestion = prompt("Edit question:", card.question);
     const newAnswer = prompt("Edit answer:", card.answer);
     if (newQuestion !== null && newAnswer !== null) {
-      await updateDoc(doc(db, "cards", card.id), {
+      await updateDoc(doc(db, `users/${user.uid}/cards`, card.id), {
         question: newQuestion,
         answer: newAnswer,
       });
@@ -79,8 +105,9 @@ export default function Decks() {
     }
   };
 
-  /** --- SRS Review Logic --- **/
+  /** --- SRS Review --- **/
   const reviewCard = async (card, quality) => {
+    if (!user) return;
     let interval = card.interval || 1;
     let ease = card.ease || 2.5;
 
@@ -91,7 +118,7 @@ export default function Decks() {
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + interval);
 
-    await updateDoc(doc(db, "cards", card.id), {
+    await updateDoc(doc(db, `users/${user.uid}/cards`, card.id), {
       interval,
       due: dueDate.toISOString(),
     });
@@ -99,9 +126,16 @@ export default function Decks() {
     fetchCards(selectedDeck.id);
   };
 
-  useEffect(() => {
-    fetchDecks();
-  }, []);
+  if (!user) {
+    return (
+      <div className="p-4">
+        <h1 className="text-xl font-bold mb-4">Decks</h1>
+        <button onClick={handleLogin} className="bg-blue-500 text-white p-2">
+          Login with Google
+        </button>
+      </div>
+    );
+  }
 
   const dueCards = cards.filter((card) =>
     showDueOnly ? new Date(card.due) <= new Date() : true
@@ -109,7 +143,12 @@ export default function Decks() {
 
   return (
     <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Decks</h1>
+      <div className="flex justify-between mb-4">
+        <h1 className="text-xl font-bold">Decks</h1>
+        <button onClick={handleLogout} className="bg-red-500 text-white p-2">
+          Logout
+        </button>
+      </div>
 
       {/* Create Deck */}
       <div className="mb-4">

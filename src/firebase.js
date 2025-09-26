@@ -1,7 +1,6 @@
-// src/firebase.js
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore, Timestamp, enableIndexedDbPersistence } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -15,11 +14,15 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const TimestampLib = Timestamp;
+export const auth = getAuth(app);
+export const provider = new GoogleAuthProvider();
 
-// try to enable offline persistence (optional)
-enableIndexedDbPersistence(db).catch((err) => {
-  console.warn("IndexedDb persistence failed:", err);
-});
+export const loginWithGoogle = async () => {
+  const result = await signInWithPopup(auth, provider);
+  return result.user;
+};
+
+export const logout = async () => {
+  await signOut(auth);
+};
