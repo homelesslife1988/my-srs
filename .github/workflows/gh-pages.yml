@@ -4,6 +4,9 @@ on:
   push:
     branches: [ main ]   # change if your primary branch name differs
 
+permissions:
+  contents: write
+  
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
